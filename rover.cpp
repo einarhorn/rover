@@ -1,5 +1,6 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
+#include <vector>
 
 // Represents a 2x2 grid of the planet
 class Grid {
@@ -40,11 +41,15 @@ public:
     this->dir = dir;
     this->setRow(row);
     this->setCol(col);
+
+    // Initialize available movements
+    this->initMovementPatternMap();
   }
 
   // GETTERS
   int getRow() { return this->row; }
   int getCol() { return this->col; }
+  int getDir() { return this->dir; }
 
   // SETTERS
   // TODO: Should these be private??
@@ -89,6 +94,20 @@ private:
   // Grid that rover is currently on
   Grid grid = Grid(0,0);
 
+  // Maps from a cardinal direction to what the corresponding
+  // forward movement (as a [row,col] pair) would look like
+  std::vector< std::pair<int,int> > movementPatternMap;
+
+  // Generates a mapping from cardinal direction to corresponding forward movement
+  void initMovementPatternMap() {
+    // Vector should hold the 4 cardinal directions
+    movementPatternMap.resize(4);
+    movementPatternMap[NORTH] = {1,0};
+    movementPatternMap[EAST] = {0,1};
+    movementPatternMap[SOUTH] = {-1,0};
+    movementPatternMap[WEST] = {0,-1};
+  }
+
   void moveHelper(char movement) {
     switch (movement) {
       case 'F': {
@@ -119,11 +138,15 @@ private:
   }
 
   void moveRover(bool isMoveForward) {
-    // TODO: This doesn't take into account *direction*!
+    // Get the available movement pattern for the rover's current direction
+    std::pair<int, int> movementPattern = movementPatternMap[this->getDir()];
+
     if (isMoveForward) {
-      this->setRow(this->getRow() +1);
+      this->setRow(this->getRow() + movementPattern.first);
+      this->setCol(this->getCol() + movementPattern.second);
     } else {
-      this->setRow(this->getRow() -1);
+      this->setRow(this->getRow() - movementPattern.first);
+      this->setCol(this->getCol() - movementPattern.second);
     }
   }
 
@@ -195,4 +218,18 @@ TEST_CASE( "Rover basic movement Test", "[rover]" ) {
     // Rover should now be at 1, 0
     REQUIRE( rov.getRow() == 1 );
     REQUIRE( rov.getCol() == 0 );
+
+    rov.move('B');
+    // Rover should now be at 1, 0
+    REQUIRE( rov.getRow() == 0 );
+    REQUIRE( rov.getCol() == 0 );
+
+    // Should wrap back to zero
+    rov.move('F');
+    rov.move('F');
+    rov.move('F');
+    rov.move('F');
+    REQUIRE( rov.getRow() == 0 );
+    REQUIRE( rov.getCol() == 0 );
+
 }
