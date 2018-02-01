@@ -101,7 +101,9 @@ public:
    **/
   Rover(int row, int col, Direction dir, Grid grid) {
     // Validate that the given row and col is valid for the grid
-    if (grid.isInGrid(row, col)) {
+    // This checks both that the row/col is in the grid,
+    // and that there are no obstacles at this location
+    if (!grid.isValidLocation(row, col)) {
       throw std::runtime_error("Rover cannot be placed here");
     }
 
@@ -237,7 +239,7 @@ private:
       this->setRow(newRow);
       this->setCol(newCol);
     } else {
-      throw std::runtime_error("Obstacle encountered");
+      throw std::runtime_error("Obstacle encountered at: " + newRow ", " + newCol);
     }
   }
 
@@ -352,13 +354,47 @@ TEST_CASE( "Rover basic obstacle movement Test", "[rover]" ) {
     REQUIRE( rov.getRow() == 1 );
     REQUIRE( rov.getCol() == 0 );
 
-    // Error when attempting to move forward
     REQUIRE_THROWS_AS(rov.move('F'), std::runtime_error);
 
     // Error when attempting to move right
     rov.move('R');
     REQUIRE_THROWS_AS(rov.move('F'), std::runtime_error);
 }
+
+TEST_CASE( "Rover complicated obstacle movement test", "[rover]" ) {
+    Grid grid = Grid(4,4);
+    grid.putObstacle(1,1);
+    Rover rov = Rover(0, 0, NORTH, grid);
+
+    rov.move('F');
+    rov.move('R');
+    REQUIRE( rov.getRow() == 1 );
+    REQUIRE( rov.getCol() == 0 );
+    REQUIRE( rov.getDir() == EAST );
+
+    REQUIRE_THROWS_AS(rov.move('F'), std::runtime_error);
+
+    rov.move('L');
+    rov.move('F');
+    rov.move('R');
+    rov.move('F');
+    rov.move('R');
+    REQUIRE( rov.getRow() == 2 );
+    REQUIRE( rov.getCol() == 1 );
+    REQUIRE( rov.getDir() == SOUTH );
+
+    REQUIRE_THROWS_AS(rov.move('F'), std::runtime_error);
+
+    // Wrap around and approach obstancle from other side
+    rov.move('L');
+    rov.move('L');
+    rov.move('F');
+    rov.move('F');
+    REQUIRE( rov.getRow() == 0 );
+    REQUIRE( rov.getCol() == 1 );
+    REQUIRE_THROWS_AS(rov.move('F'), std::runtime_error);
+}
+
 
 TEST_CASE( "Rover basic rotation Test", "[rover]" ) {
     Rover rov = Rover(0, 0, NORTH, Grid(4, 4));
@@ -377,4 +413,20 @@ TEST_CASE( "Rover basic rotation Test", "[rover]" ) {
     rov.move('L');
     rov.move('L');
     REQUIRE( rov.getDir() == NORTH );
+}
+
+TEST_CASE( "Rover String input test", "[rover]" ) {
+    Rover rov = Rover(0, 0, NORTH, Grid(4, 4));
+
+    rov.move("FFFFFF");
+    REQUIRE( rov.getRow() == 2 );
+    REQUIRE( rov.getCol() == 0 );
+
+    rov.move("RF");
+    REQUIRE( rov.getRow() == 2 );
+    REQUIRE( rov.getCol() == 1 );
+
+    rov.move("RRLLB");
+    REQUIRE( rov.getRow() == 2 );
+    REQUIRE( rov.getCol() == 0 );
 }
