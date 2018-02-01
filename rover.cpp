@@ -25,9 +25,21 @@ enum Direction {
 class Rover {
 public:
   // Rover Constructor
-  Rover(int row, int col) {
-    this->row = row;
-    this->col = col;
+  Rover(int row, int col, Direction dir, Grid grid) {
+    // We only do explicit error checking here
+    if (row > grid.getNumRows() || row < 0) {
+      throw std::runtime_error("failed to construct");
+    }
+
+    if (col > grid.getNumCols() || col < 0) {
+      throw std::runtime_error("failed to construct");
+    }
+
+    // Set private vars
+    this->grid = grid;
+    this->dir = dir;
+    this->setRow(row);
+    this->setCol(col);
   }
 
   // GETTERS
@@ -50,6 +62,8 @@ private:
   // Direction rover is currently facing
   Direction dir;
 
+  // Grid that rover is currently on
+  Grid grid = Grid(0,0);
 
 };
 
@@ -68,16 +82,31 @@ TEST_CASE( "Grid Construction Test", "[grid]" ) {
 
 // Testing Rover class
 TEST_CASE( "Rover Construction Test", "[rover]" ) {
-    Rover rov = Rover(1, 4);
+    Rover rov = Rover(1, 4, NORTH, Grid(5, 5));
     REQUIRE( rov.getRow() == 1 );
     REQUIRE( rov.getCol() == 4 );
 }
 
+TEST_CASE( "Rover Invalid Construction Test", "[rover]" ) {
+    // Rover would not fit on this grid
+    REQUIRE_THROWS_AS(Rover(1, 4, NORTH, Grid(1, 1)), std::runtime_error);
+}
+
 TEST_CASE( "Rover setters Test", "[rover]" ) {
-    Rover rov = Rover(1, 4);
+    Rover rov = Rover(1, 4, NORTH, Grid(20, 20));
     rov.setRow(11);
     rov.setCol(15);
     REQUIRE( rov.getRow() == 11 );
     REQUIRE( rov.getCol() == 15 );
+}
 
+TEST_CASE( "Rover setters wrapping Test", "[rover]" ) {
+    Rover rov = Rover(1, 4, NORTH, Grid(10, 10));
+
+    // New co-ordinates are outside of grid!
+    // TODO: Co-ordinates should be wrapped.
+    rov.setRow(11);
+    rov.setCol(15);
+    REQUIRE( rov.getRow() == 11 );
+    REQUIRE( rov.getCol() == 15 );
 }
