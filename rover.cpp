@@ -8,12 +8,39 @@ public:
   Grid(int numRows, int numCols) {
     this->numRows = numRows;
     this->numCols = numCols;
+    this->obstacleMap.assign(numRows, std::vector<bool>(numCols, false));
   }
-  int getNumRows() { return this->numRows; }
-  int getNumCols() { return this->numCols; }
+  int getNumRows() { return this->obstacleMap.size(); }
+  int getNumCols() { return this->obstacleMap[0].size(); }
 
+  void putObstacle(int row, int col) {
+    if (validLocation(row, col) ) {
+      this->obstacleMap[row][col] = true;
+    }
+  }
+
+  bool obstacleExists(int row, int col) {
+    if (validLocation(row, col)) {
+      return this->obstacleMap[row][col];
+    } else {
+      return false;
+    }
+  }
 private:
   int numRows, numCols;
+  std::vector< std::vector<bool> > obstacleMap;
+
+  bool validLocation(int row, int col) {
+    if (row < 0 || col < 0) {
+      return false;
+    } else if (row >= getNumRows()) {
+      return false;
+    } else if (col >= getNumCols()) {
+      return false;
+    } else {
+      return true;
+    }
+  }
 };
 
 enum Direction {
@@ -141,6 +168,7 @@ private:
     // Get the available movement pattern for the rover's current direction
     std::pair<int, int> movementPattern = movementPatternMap[this->getDir()];
 
+    // TODO: Rover needs to check if obstacle exists!
     if (isMoveForward) {
       this->setRow(this->getRow() + movementPattern.first);
       this->setCol(this->getCol() + movementPattern.second);
@@ -194,6 +222,16 @@ TEST_CASE( "Grid Construction Test", "[grid]" ) {
     REQUIRE( grid.getNumCols() == 4 );
 }
 
+TEST_CASE( "Grid Obstacle Test", "[grid]" ) {
+    Grid grid = Grid(4, 4);
+    grid.putObstacle(1,1);
+    grid.putObstacle(2,2);
+    REQUIRE( grid.obstacleExists(1,1) == true );
+    REQUIRE( grid.obstacleExists(2,2) == true );
+    REQUIRE( grid.obstacleExists(0,2) == false );
+    REQUIRE( grid.obstacleExists(10,10) == false );
+}
+
 
 // Testing Rover class
 TEST_CASE( "Rover Construction Test", "[rover]" ) {
@@ -245,7 +283,7 @@ TEST_CASE( "Rover basic movement Test", "[rover]" ) {
     REQUIRE( rov.getCol() == 0 );
 
     rov.move('B');
-    // Rover should now be at 1, 0
+    // Rover should now be at 0, 0
     REQUIRE( rov.getRow() == 0 );
     REQUIRE( rov.getCol() == 0 );
 
@@ -255,6 +293,32 @@ TEST_CASE( "Rover basic movement Test", "[rover]" ) {
     rov.move('F');
     rov.move('F');
     REQUIRE( rov.getRow() == 0 );
+    REQUIRE( rov.getCol() == 0 );
+}
+
+TEST_CASE( "Rover basic obstacle movement Test", "[rover]" ) {
+    Grid grid = Grid(4,4);
+    // Place obstacles
+    grid.putObstacle(1,1);
+    grid.putObstacle(2,0);
+    Rover rov = Rover(0, 0, NORTH, grid);
+
+    rov.move('F');
+    // Rover should now be at 1, 0
+    REQUIRE( rov.getRow() == 1 );
+    REQUIRE( rov.getCol() == 0 );
+
+    // TODO: Need error message
+    rov.move('F');
+    // Rover should still be at 1, 0
+    REQUIRE( rov.getRow() == 1 );
+    REQUIRE( rov.getCol() == 0 );
+
+    // TODO: Error message
+    rov.move('R');
+    rov.move('F');
+    // Rover should still be at 1, 0
+    REQUIRE( rov.getRow() == 1 );
     REQUIRE( rov.getCol() == 0 );
 }
 
