@@ -120,16 +120,16 @@ private:
         moveRover(isMoveForward);
         break;
       }
-      // case 'L': {
-      //   bool isRotateLeft = true;
-      //   rotateRover(isRotateLeft);
-      //   break;
-      // }
-      // case 'R': {
-      //   bool isRotateLeft = false;
-      //   rotateRover(isRotateLeft);
-      //   break;
-      // }
+      case 'L': {
+        bool isRotateLeft = true;
+        rotateRover(isRotateLeft);
+        break;
+      }
+      case 'R': {
+        bool isRotateLeft = false;
+        rotateRover(isRotateLeft);
+        break;
+      }
       default: {
         // TODO: Some sort of error here
         return;
@@ -150,10 +150,35 @@ private:
     }
   }
 
-  // void rotateRover(bool isRotateLeft) {
-  //
-  // }
+  void rotateRover(bool isRotateLeft) {
+    // TODO: Can we improve this?
+    switch (this->getDir()) {
+      case NORTH: {
+        this->setDir(isRotateLeft ? WEST : EAST);
+        break;
+      }
+      case EAST: {
+        this->setDir(isRotateLeft ? NORTH : SOUTH);
+        break;
+      }
+      case SOUTH: {
+        this->setDir(isRotateLeft ? EAST : WEST);
+        break;
+      }
+      case WEST: {
+        this->setDir(isRotateLeft ? SOUTH : WEST);
+        break;
+      }
+      default: {
+        break;
+      }
+    }
 
+  }
+
+  void setDir(Direction dir) {
+    this->dir = dir;
+  }
 
 };
 
@@ -231,5 +256,23 @@ TEST_CASE( "Rover basic movement Test", "[rover]" ) {
     rov.move('F');
     REQUIRE( rov.getRow() == 0 );
     REQUIRE( rov.getCol() == 0 );
+}
 
+TEST_CASE( "Rover basic rotation Test", "[rover]" ) {
+    Rover rov = Rover(0, 0, NORTH, Grid(4, 4));
+
+    rov.move('R');
+    REQUIRE( rov.getDir() == EAST );
+
+    rov.move('L');
+    REQUIRE( rov.getDir() == NORTH );
+
+    rov.move('L');
+    rov.move('L');
+    REQUIRE( rov.getDir() == SOUTH );
+
+    // Should wrap back to NORTH
+    rov.move('L');
+    rov.move('L');
+    REQUIRE( rov.getDir() == NORTH );
 }
