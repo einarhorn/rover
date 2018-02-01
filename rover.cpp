@@ -27,11 +27,11 @@ public:
   // Rover Constructor
   Rover(int row, int col, Direction dir, Grid grid) {
     // We only do explicit error checking here
-    if (row > grid.getNumRows() || row < 0) {
+    if (row >= grid.getNumRows() || row < 0) {
       throw std::runtime_error("failed to construct");
     }
 
-    if (col > grid.getNumCols() || col < 0) {
+    if (col >= grid.getNumCols() || col < 0) {
       throw std::runtime_error("failed to construct");
     }
 
@@ -47,13 +47,17 @@ public:
   int getCol() { return this->col; }
 
   // SETTERS
-  // TODO: Implement wrapping for next two functions
-  int setRow(int row) {
-    this->row = row;
+  void setRow(int row) {
+    // Wrap row
+    this->row = (row % this->grid.getNumRows() + this->grid.getNumRows()) % this->grid.getNumRows();
   }
-  int setCol(int col) {
-    this->col = col;
+
+  void setCol(int col) {
+    // Wrap column
+    this->col = (col % this->grid.getNumCols() + this->grid.getNumCols()) % this->grid.getNumCols();
   }
+
+
 
 private:
   // Current row and col of rover
@@ -90,6 +94,9 @@ TEST_CASE( "Rover Construction Test", "[rover]" ) {
 TEST_CASE( "Rover Invalid Construction Test", "[rover]" ) {
     // Rover would not fit on this grid
     REQUIRE_THROWS_AS(Rover(1, 4, NORTH, Grid(1, 1)), std::runtime_error);
+
+    // Nor this one
+    REQUIRE_THROWS_AS(Rover(0, 4, NORTH, Grid(1, 4)), std::runtime_error);
 }
 
 TEST_CASE( "Rover setters Test", "[rover]" ) {
@@ -101,12 +108,18 @@ TEST_CASE( "Rover setters Test", "[rover]" ) {
 }
 
 TEST_CASE( "Rover setters wrapping Test", "[rover]" ) {
-    Rover rov = Rover(1, 4, NORTH, Grid(10, 10));
+    Rover rov = Rover(1, 3, NORTH, Grid(4, 4));
 
     // New co-ordinates are outside of grid!
-    // TODO: Co-ordinates should be wrapped.
-    rov.setRow(11);
-    rov.setCol(15);
-    REQUIRE( rov.getRow() == 11 );
-    REQUIRE( rov.getCol() == 15 );
+    // Should wrap back to zero
+    rov.setRow(4);
+    rov.setCol(4);
+    REQUIRE( rov.getRow() == 0 );
+    REQUIRE( rov.getCol() == 0 );
+
+    // Wrap in the negative direction
+    rov.setRow(-1);
+    rov.setCol(-1);
+    REQUIRE( rov.getRow() == 3 );
+    REQUIRE( rov.getCol() == 3 );
 }
