@@ -11,8 +11,24 @@ enum Direction {
 
 class Rover {
 public:
-  int getRow() { return this->row; }
+  // Rover Constructor
+  Rover(int row, int col) {
+    this->row = row;
+    this->col = col;
+  }
 
+  // GETTERS
+  int getRow() { return this->row; }
+  int getCol() { return this->col; }
+
+  // SETTERS
+  // TODO: Implement wrapping for next two functions
+  int setRow(int row) {
+    this->row = row;
+  }
+  int setCol(int col) {
+    this->col = col;
+  }
 
 private:
   // Current row and col of rover
@@ -43,7 +59,8 @@ TEST_CASE( "Factorials are computed", "[factorial]" ) {
     REQUIRE( Factorial(10) == 3628800 );
 }
 
-TEST_CASE( "Rover Test", "[factorial]" ) {
-    Rover rov = Rover();
-    REQUIRE( rov.getRow() == 0 );
+TEST_CASE( "Rover Construction Test", "[factorial]" ) {
+    Rover rov = Rover(1, 4);
+    REQUIRE( rov.getRow() == 1 );
+    REQUIRE( rov.getCol() == 4 );
 }
