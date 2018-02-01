@@ -5,32 +5,48 @@
 // Represents a 2x2 grid of the planet
 class Grid {
 public:
+
+  /**
+   * Constructs a Grid object
+   *
+   * This object keeps track of what obstacles are currently on the grid.
+   * This object also handles wrapping around the planet
+   **/
   Grid(int numRows, int numCols) {
-    this->numRows = numRows;
-    this->numCols = numCols;
-    this->obstacleMap.assign(numRows, std::vector<bool>(numCols, false));
+    this->obstacleMap.assign(numRows, std::vector<bool>(numCols, true));
   }
+
+  /**
+   * GETTERS
+   **/
   int getNumRows() { return this->obstacleMap.size(); }
   int getNumCols() { return this->obstacleMap[0].size(); }
 
+  /**
+   * Places an obstacle at the given row and column
+   **/
   void putObstacle(int row, int col) {
-    if (validLocation(row, col) ) {
-      this->obstacleMap[row][col] = true;
+    if (isInGrid(row, col) ) {
+      this->obstacleMap[row][col] = false;
     }
   }
 
-  bool obstacleExists(int row, int col) {
-    if (validLocation(row, col)) {
+  /**
+   * Checks whether the given row and column location is within the grid
+   * and has no obstacles
+   **/
+  bool isValidLocation(int row, int col) {
+    if (isInGrid(row, col)) {
       return this->obstacleMap[row][col];
     } else {
       return false;
     }
   }
-private:
-  int numRows, numCols;
-  std::vector< std::vector<bool> > obstacleMap;
 
-  bool validLocation(int row, int col) {
+  /**
+   * Checks if the given row and col is within the dimensions of the grid
+   **/
+  bool isInGrid(int row, int col) {
     if (row < 0 || col < 0) {
       return false;
     } else if (row >= getNumRows()) {
@@ -41,8 +57,32 @@ private:
       return true;
     }
   }
+
+  /**
+   * Converts a row to a corresponding row on the grid (i.e. wrapping)
+   * Example: row 4 on a 3 row grid would return row 0
+   **/
+  int convertToGridRow(int row) {
+    return (row % this->getNumRows() + this->getNumRows()) % this->getNumRows();
+  }
+
+  /**
+   * Converts a col to a corresponding col on the grid (i.e. wrapping)
+   **/
+  int convertToGridCol(int col) {
+    return (col % this->getNumCols() + this->getNumCols()) % this->getNumCols();
+  }
+
+private:
+  /**
+   * 2D array, false value indicates spot is taken
+   **/
+  std::vector< std::vector<bool> > obstacleMap;
 };
 
+/**
+ * Represents the four cardinal directions
+ **/
 enum Direction {
   NORTH = 0,
   EAST = 1,
@@ -50,20 +90,22 @@ enum Direction {
   WEST = 3
 };
 
+/**
+ * Represents a Rover object
+ * A Rover has a (row, col) position, a direction, and a grid upon which it sits
+ **/
 class Rover {
 public:
-  // Rover Constructor
+  /**
+   * Constructs a rover for a given (row, col) position, a direction, and a grid
+   **/
   Rover(int row, int col, Direction dir, Grid grid) {
-    // We only do explicit error checking here
-    if (row >= grid.getNumRows() || row < 0) {
-      throw std::runtime_error("failed to construct");
+    // Validate that the given row and col is valid for the grid
+    if (grid.isInGrid(row, col)) {
+      throw std::runtime_error("Rover cannot be placed here");
     }
 
-    if (col >= grid.getNumCols() || col < 0) {
-      throw std::runtime_error("failed to construct");
-    }
-
-    // Set private vars
+    // Set vars
     this->grid = grid;
     this->dir = dir;
     this->setRow(row);
@@ -73,59 +115,62 @@ public:
     this->initMovementPatternMap();
   }
 
-  // GETTERS
+  /**
+   * GETTERS
+   **/
   int getRow() { return this->row; }
   int getCol() { return this->col; }
   int getDir() { return this->dir; }
 
-  // SETTERS
-  // TODO: Should these be private??
-  void setRow(int row) {
-    // Wrap row
-    this->row = (row % this->grid.getNumRows() + this->grid.getNumRows()) % this->grid.getNumRows();
-  }
 
-  void setCol(int col) {
-    // Wrap column
-    this->col = (col % this->grid.getNumCols() + this->grid.getNumCols()) % this->grid.getNumCols();
-  }
-
-  // MOVEMENT
+  /**
+   * MOVEMENT
+   **/
 
   /**
    * Handles movement when input as a string
+   * Characters allowed are 'F', 'B', 'L', 'R'
    **/
   void move(std::string movements) {
     for (char movement : movements) {
-      // TODO: Implement some sort of error checking
       moveHelper(movement);
     }
   }
 
   /**
    * Handles movement when input as a single character
+   * Characters allowed are 'F', 'B', 'L', 'R'
    **/
   void move(char movement) {
-    // TODO: Implement some sort of error checking
     moveHelper(movement);
   }
 
 
 private:
-  // Current row and col of rover
+  /**
+   * Current row and col of rover
+   **/
   int row, col;
 
-  // Direction rover is currently facing
+  /**
+   * Direction rover is currently facing
+   **/
   Direction dir;
 
-  // Grid that rover is currently on
+  /**
+   * Grid that rover is currently on
+   **/
   Grid grid = Grid(0,0);
 
-  // Maps from a cardinal direction to what the corresponding
-  // forward movement (as a [row,col] pair) would look like
+  /**
+   * Maps from a cardinal direction to what the corresponding
+   * forward movement (as a [row,col] pair) would look like
+   **/
   std::vector< std::pair<int,int> > movementPatternMap;
 
-  // Generates a mapping from cardinal direction to corresponding forward movement
+  /**
+   * Generates a mapping from cardinal direction to corresponding forward movement
+   **/
   void initMovementPatternMap() {
     // Vector should hold the 4 cardinal directions
     movementPatternMap.resize(4);
@@ -135,51 +180,71 @@ private:
     movementPatternMap[WEST] = {0,-1};
   }
 
+  /**
+   * Determines the type of move (movement/rotation)
+   **/
   void moveHelper(char movement) {
     switch (movement) {
+      // Forward
       case 'F': {
         bool isMoveForward = true;
         moveRover(isMoveForward);
         break;
       }
+      // Backward
       case 'B': {
         bool isMoveForward = false;
         moveRover(isMoveForward);
         break;
       }
+      // Left
       case 'L': {
         bool isRotateLeft = true;
         rotateRover(isRotateLeft);
         break;
       }
+      // Right
       case 'R': {
         bool isRotateLeft = false;
         rotateRover(isRotateLeft);
         break;
       }
       default: {
-        // TODO: Some sort of error here
-        return;
+        throw std::runtime_error("Invalid movement");
+        break;
       }
     }
   }
 
+  /**
+   * Moves the rover forwards/backwards
+   **/
   void moveRover(bool isMoveForward) {
     // Get the available movement pattern for the rover's current direction
     std::pair<int, int> movementPattern = movementPatternMap[this->getDir()];
 
-    // TODO: Rover needs to check if obstacle exists!
+    int newRow, newCol;
     if (isMoveForward) {
-      this->setRow(this->getRow() + movementPattern.first);
-      this->setCol(this->getCol() + movementPattern.second);
+      newRow = this->grid.convertToGridRow(this->getRow() + movementPattern.first);
+      newCol = this->grid.convertToGridCol(this->getCol() + movementPattern.second);
     } else {
-      this->setRow(this->getRow() - movementPattern.first);
-      this->setCol(this->getCol() - movementPattern.second);
+      newRow = this->grid.convertToGridRow(this->getRow() - movementPattern.first);
+      newCol = this->grid.convertToGridCol(this->getCol() - movementPattern.second);
+    }
+
+    // Verifies that the new row and column have no obstacles placed
+    if (this->grid.isValidLocation(newRow, newCol)) {
+      this->setRow(newRow);
+      this->setCol(newCol);
+    } else {
+      throw std::runtime_error("Obstacle encountered");
     }
   }
 
+  /**
+   * Rotates the rover left/right
+   **/
   void rotateRover(bool isRotateLeft) {
-    // TODO: Can we improve this?
     switch (this->getDir()) {
       case NORTH: {
         this->setDir(isRotateLeft ? WEST : EAST);
@@ -198,15 +263,19 @@ private:
         break;
       }
       default: {
+        throw std::runtime_error("Cannot rotate");
         break;
       }
     }
 
   }
 
-  void setDir(Direction dir) {
-    this->dir = dir;
-  }
+  /**
+   * SETTERS
+   **/
+  void setRow(int row) { this->row = row; }
+  void setCol(int col) { this->col = col; }
+  void setDir(Direction dir) { this->dir = dir; }
 
 };
 
@@ -226,10 +295,10 @@ TEST_CASE( "Grid Obstacle Test", "[grid]" ) {
     Grid grid = Grid(4, 4);
     grid.putObstacle(1,1);
     grid.putObstacle(2,2);
-    REQUIRE( grid.obstacleExists(1,1) == true );
-    REQUIRE( grid.obstacleExists(2,2) == true );
-    REQUIRE( grid.obstacleExists(0,2) == false );
-    REQUIRE( grid.obstacleExists(10,10) == false );
+    REQUIRE( grid.isValidLocation(1,1) == false );
+    REQUIRE( grid.isValidLocation(2,2) == false );
+    REQUIRE( grid.isValidLocation(0,2) == true );
+    REQUIRE( grid.isValidLocation(10,10) == false );
 }
 
 
@@ -246,31 +315,6 @@ TEST_CASE( "Rover Invalid Construction Test", "[rover]" ) {
 
     // Nor this one
     REQUIRE_THROWS_AS(Rover(0, 4, NORTH, Grid(1, 4)), std::runtime_error);
-}
-
-TEST_CASE( "Rover setters Test", "[rover]" ) {
-    Rover rov = Rover(1, 4, NORTH, Grid(20, 20));
-    rov.setRow(11);
-    rov.setCol(15);
-    REQUIRE( rov.getRow() == 11 );
-    REQUIRE( rov.getCol() == 15 );
-}
-
-TEST_CASE( "Rover setters wrapping Test", "[rover]" ) {
-    Rover rov = Rover(1, 3, NORTH, Grid(4, 4));
-
-    // New co-ordinates are outside of grid!
-    // Should wrap back to zero
-    rov.setRow(4);
-    rov.setCol(4);
-    REQUIRE( rov.getRow() == 0 );
-    REQUIRE( rov.getCol() == 0 );
-
-    // Wrap in the negative direction
-    rov.setRow(-1);
-    rov.setCol(-1);
-    REQUIRE( rov.getRow() == 3 );
-    REQUIRE( rov.getCol() == 3 );
 }
 
 // Rover Movement TESTS
@@ -308,18 +352,12 @@ TEST_CASE( "Rover basic obstacle movement Test", "[rover]" ) {
     REQUIRE( rov.getRow() == 1 );
     REQUIRE( rov.getCol() == 0 );
 
-    // TODO: Need error message
-    rov.move('F');
-    // Rover should still be at 1, 0
-    REQUIRE( rov.getRow() == 1 );
-    REQUIRE( rov.getCol() == 0 );
+    // Error when attempting to move forward
+    REQUIRE_THROWS_AS(rov.move('F'), std::runtime_error);
 
-    // TODO: Error message
+    // Error when attempting to move right
     rov.move('R');
-    rov.move('F');
-    // Rover should still be at 1, 0
-    REQUIRE( rov.getRow() == 1 );
-    REQUIRE( rov.getCol() == 0 );
+    REQUIRE_THROWS_AS(rov.move('F'), std::runtime_error);
 }
 
 TEST_CASE( "Rover basic rotation Test", "[rover]" ) {
