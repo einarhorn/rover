@@ -47,6 +47,7 @@ public:
   int getCol() { return this->col; }
 
   // SETTERS
+  // TODO: Should these be private??
   void setRow(int row) {
     // Wrap row
     this->row = (row % this->grid.getNumRows() + this->grid.getNumRows()) % this->grid.getNumRows();
@@ -57,6 +58,25 @@ public:
     this->col = (col % this->grid.getNumCols() + this->grid.getNumCols()) % this->grid.getNumCols();
   }
 
+  // MOVEMENT
+
+  /**
+   * Handles movement when input as a string
+   **/
+  void move(std::string movements) {
+    for (char movement : movements) {
+      // TODO: Implement some sort of error checking
+      moveHelper(movement);
+    }
+  }
+
+  /**
+   * Handles movement when input as a single character
+   **/
+  void move(char movement) {
+    // TODO: Implement some sort of error checking
+    moveHelper(movement);
+  }
 
 
 private:
@@ -68,6 +88,49 @@ private:
 
   // Grid that rover is currently on
   Grid grid = Grid(0,0);
+
+  void moveHelper(char movement) {
+    switch (movement) {
+      case 'F': {
+        bool isMoveForward = true;
+        moveRover(isMoveForward);
+        break;
+      }
+      case 'B': {
+        bool isMoveForward = false;
+        moveRover(isMoveForward);
+        break;
+      }
+      // case 'L': {
+      //   bool isRotateLeft = true;
+      //   rotateRover(isRotateLeft);
+      //   break;
+      // }
+      // case 'R': {
+      //   bool isRotateLeft = false;
+      //   rotateRover(isRotateLeft);
+      //   break;
+      // }
+      default: {
+        // TODO: Some sort of error here
+        return;
+      }
+    }
+  }
+
+  void moveRover(bool isMoveForward) {
+    // TODO: This doesn't take into account *direction*!
+    if (isMoveForward) {
+      this->setRow(this->getRow() +1);
+    } else {
+      this->setRow(this->getRow() -1);
+    }
+  }
+
+  // void rotateRover(bool isRotateLeft) {
+  //
+  // }
+
 
 };
 
@@ -122,4 +185,14 @@ TEST_CASE( "Rover setters wrapping Test", "[rover]" ) {
     rov.setCol(-1);
     REQUIRE( rov.getRow() == 3 );
     REQUIRE( rov.getCol() == 3 );
+}
+
+// Rover Movement TESTS
+TEST_CASE( "Rover basic movement Test", "[rover]" ) {
+    Rover rov = Rover(0, 0, NORTH, Grid(4, 4));
+
+    rov.move('F');
+    // Rover should now be at 1, 0
+    REQUIRE( rov.getRow() == 1 );
+    REQUIRE( rov.getCol() == 0 );
 }
