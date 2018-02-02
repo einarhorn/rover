@@ -239,7 +239,8 @@ private:
       this->setRow(newRow);
       this->setCol(newCol);
     } else {
-      throw std::runtime_error("Obstacle encountered at: " + newRow ", " + newCol);
+      std::string errorMessage = "Obstacle encountered at: " + std::to_string(newRow) + ", " + std::to_string(newCol);
+      throw std::runtime_error(errorMessage);
     }
   }
 
